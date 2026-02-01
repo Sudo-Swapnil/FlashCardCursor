@@ -1,0 +1,52 @@
+---
+alwaysApply: true
+description: Database interactions must use Drizzle ORM with the defined schema
+---
+
+# Drizzle Database Usage
+
+All database interactions in this project **must** use Drizzle ORM with the schema defined in [src/db/schema.ts](mdc:src/db/schema.ts).
+
+## Schema Structure
+
+The database schema includes:
+
+- **decksTable**: Stores flashcard decks with fields `id`, `userId`, `name`, `description`, `createdAt`, `updatedAt`
+- **cardsTable**: Stores individual flashcards with fields `id`, `deckId`, `front`, `back`, `createdAt`, `updatedAt`
+
+## Requirements
+
+1. **Always import schema tables** from `[src/db/schema.ts](mdc:src/db/schema.ts)`:
+   ```typescript
+   import { decksTable, cardsTable } from "@/db/schema";
+   ```
+
+2. **Use Drizzle queries** for all database operations:
+   - `db.select()` for SELECT queries
+   - `db.insert()` for INSERT queries
+   - `db.update()` for UPDATE queries
+   - `db.delete()` for DELETE queries
+
+3. **Never use raw SQL queries** - always use Drizzle's query builder
+
+4. **Type safety**: Leverage Drizzle's TypeScript types for type-safe database operations
+
+5. **Database instance**: Import the database instance from `[src/db/index.ts](mdc:src/db/index.ts)`
+
+## Example Usage
+
+```typescript
+import { db } from "@/db";
+import { decksTable, cardsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+// Query example
+const decks = await db.select().from(decksTable).where(eq(decksTable.userId, userId));
+
+// Insert example
+await db.insert(decksTable).values({
+  userId: "user123",
+  name: "My Deck",
+  description: "A sample deck"
+});
+```

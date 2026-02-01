@@ -1,5 +1,37 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Database Setup
+
+This project uses [Drizzle ORM](https://orm.drizzle.team/) with a [Neon](https://neon.tech/) Postgres database.
+
+### Environment Variables
+
+Make sure your `.env` file includes:
+
+```
+DATABASE_URL=your_neon_connection_string
+```
+
+### Database Commands
+
+```bash
+# Push schema changes to the database
+npx drizzle-kit push
+
+# Generate migrations
+npx drizzle-kit generate
+
+# Apply migrations
+npx drizzle-kit migrate
+
+# Open Drizzle Studio (database GUI)
+npx drizzle-kit studio
+```
+
+### Database Schema
+
+The database schema is defined in `src/db/schema.ts`. The database connection is exported from `src/db/index.ts`.
+
 ## Getting Started
 
 First, run the development server:
@@ -18,7 +50,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Poppins](https://fonts.google.com/specimen/Poppins) from Google Fonts.
 
 ## Learn More
 

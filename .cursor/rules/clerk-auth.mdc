@@ -1,0 +1,120 @@
+---
+alwaysApply: true
+---
+
+# Clerk Authentication & Data Isolation
+
+This project uses **Clerk** for authentication. Data isolation and security are critical.
+
+## Core Security Principle
+
+**Users must ONLY access their own data.** Every database query that fetches user-specific data must include proper authorization checks.
+
+## Getting the Current User
+
+Use Clerk's `auth()` helper to get the current user's ID:
+
+```typescript
+import { auth } from "@clerk/nextjs/server";
+
+const { userId } = await auth();
+
+if (!userId) {
+  // Handle unauthenticated user - redirect or return 401
+  return new Response("Unauthorized", { status: 401 });
+}
+```
+
+## Database Query Requirements
+
+### ✅ REQUIRED: Always filter by userId
+
+When querying user-specific data from [src/db/schema.ts](mdc:src/db/schema.ts), **always** include a `userId` filter:
+
+```typescript
+import { db } from "@/db";
+import { decksTable, cardsTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
+import { auth } from "@clerk/nextjs/server";
+
+// ✅ CORRECT: Filter by userId
+const { userId } = await auth();
+if (!userId) throw new Error("Unauthorized");
+
+const userDecks = await db
+  .select()
+  .from(decksTable)
+  .where(eq(decksTable.userId, userId));
+```
+
+### ❌ FORBIDDEN: Queries without userId filter
+
+```typescript
+// ❌ WRONG: No userId filter - exposes all users' data!
+const allDecks = await db.select().from(decksTable);
+```
+
+## Authorization Checks for Updates/Deletes
+
+Before updating or deleting data, **verify ownership**:
+
+```typescript
+// ✅ CORRECT: Verify ownership before deletion
+const { userId } = await auth();
+if (!userId) throw new Error("Unauthorized");
+
+const deck = await db
+  .select()
+  .from(decksTable)
+  .where(eq(decksTable.id, deckId))
+  .limit(1);
+
+if (!deck.length || deck[0].userId !== userId) {
+  throw new Error("Forbidden: You don't own this deck");
+}
+
+// Now safe to delete
+await db.delete(decksTable).where(eq(decksTable.id, deckId));
+```
+
+## Cards Authorization
+
+Since `cardsTable` doesn't have a direct `userId` field, verify ownership through the parent deck:
+
+```typescript
+// ✅ CORRECT: Verify card ownership via deck
+const { userId } = await auth();
+if (!userId) throw new Error("Unauthorized");
+
+const result = await db
+  .select({ deckUserId: decksTable.userId })
+  .from(cardsTable)
+  .innerJoin(decksTable, eq(cardsTable.deckId, decksTable.id))
+  .where(eq(cardsTable.id, cardId))
+  .limit(1);
+
+if (!result.length || result[0].deckUserId !== userId) {
+  throw new Error("Forbidden: You don't own this card");
+}
+```
+
+## API Route Protection
+
+All API routes that handle user data must:
+
+1. Check if the user is authenticated with `auth()`
+2. Filter all queries by the authenticated user's `userId`
+3. Verify ownership before any UPDATE or DELETE operations
+4. Return appropriate HTTP status codes (401 for unauthenticated, 403 for forbidden)
+
+## Middleware
+
+Authentication middleware is configured in [src/middleware.ts](mdc:src/middleware.ts) using Clerk's middleware.
+
+## Summary Checklist
+
+- [ ] Every query for user data includes `userId` filter
+- [ ] Ownership is verified before UPDATE/DELETE operations
+- [ ] `auth()` is called to get the current user
+- [ ] Unauthenticated requests are rejected
+- [ ] No data leakage between users is possible

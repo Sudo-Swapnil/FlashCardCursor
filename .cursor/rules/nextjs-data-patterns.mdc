@@ -1,0 +1,264 @@
+---
+alwaysApply: true
+---
+# Next.js Data Handling Patterns
+
+This project follows strict patterns for data handling in Next.js to ensure security, type safety, and best practices.
+
+## Core Principles
+
+### 1. Data Retrieval: Server Components Only
+
+**All data fetching from the database must be done in Server Components.**
+
+```typescript
+// ✅ CORRECT: Data fetching in a Server Component
+import { db } from "@/db";
+import { decksTable } from "@/db/schema";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+
+export default async function DecksPage() {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    redirect("/sign-in");
+  }
+  
+  const decks = await db
+    .select()
+    .from(decksTable)
+    .where(eq(decksTable.userId, userId));
+  
+  return <div>{/* Render decks */}</div>;
+}
+```
+
+```typescript
+// ❌ WRONG: Never fetch data in Client Components
+"use client";
+
+export default function DecksPage() {
+  // This is wrong - no database queries in client components
+  const decks = await db.select().from(decksTable);
+}
+```
+
+### 2. Data Mutations: Server Actions Only
+
+**All database updates, inserts, and deletes must be done via Server Actions.**
+
+Server Actions are async functions marked with `"use server"` directive.
+
+```typescript
+// ✅ CORRECT: Server Action for mutations
+"use server";
+
+import { db } from "@/db";
+import { decksTable } from "@/db/schema";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+
+const createDeckSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  description: z.string().max(500).optional(),
+});
+
+type CreateDeckInput = z.infer<typeof createDeckSchema>;
+
+export async function createDeck(input: CreateDeckInput) {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+  
+  // Validate input with Zod
+  const validatedData = createDeckSchema.parse(input);
+  
+  const [newDeck] = await db.insert(decksTable).values({
+    userId,
+    name: validatedData.name,
+    description: validatedData.description || null,
+  }).returning();
+  
+  revalidatePath("/decks");
+  
+  return { success: true, deck: newDeck };
+}
+```
+
+### 3. Zod Validation: Required for All Server Actions
+
+**Every Server Action must validate its input using Zod schemas.**
+
+#### ✅ Required Pattern
+
+```typescript
+"use server";
+
+import { z } from "zod";
+
+// 1. Define Zod schema
+const updateDeckSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+});
+
+// 2. Infer TypeScript type from schema
+type UpdateDeckInput = z.infer<typeof updateDeckSchema>;
+
+// 3. Use typed input (NOT FormData)
+export async function updateDeck(input: UpdateDeckInput) {
+  // 4. Validate with Zod
+  const validatedData = updateDeckSchema.parse(input);
+  
+  // ... rest of the logic
+}
+```
+
+#### ❌ Forbidden Patterns
+
+```typescript
+// ❌ WRONG: Using FormData as input type
+export async function updateDeck(formData: FormData) {
+  // Never use FormData directly as the type
+}
+
+// ❌ WRONG: No Zod validation
+export async function updateDeck(input: { name: string; description?: string }) {
+  // Missing Zod validation - always validate!
+}
+
+// ❌ WRONG: Using 'any' type
+export async function updateDeck(input: any) {
+  // Never use 'any' - always have proper types
+}
+```
+
+### 4. Complete Server Action Example
+
+```typescript
+"use server";
+
+import { db } from "@/db";
+import { cardsTable, decksTable } from "@/db/schema";
+import { auth } from "@clerk/nextjs/server";
+import { eq, and } from "drizzle-orm";
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+
+// Define schema
+const createCardSchema = z.object({
+  deckId: z.string().uuid(),
+  front: z.string().min(1, "Front side is required").max(1000),
+  back: z.string().min(1, "Back side is required").max(1000),
+});
+
+// Infer type
+type CreateCardInput = z.infer<typeof createCardSchema>;
+
+export async function createCard(input: CreateCardInput) {
+  // 1. Authenticate
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+  
+  // 2. Validate input
+  const validatedData = createCardSchema.parse(input);
+  
+  // 3. Verify ownership (security check)
+  const deck = await db
+    .select()
+    .from(decksTable)
+    .where(eq(decksTable.id, validatedData.deckId))
+    .limit(1);
+  
+  if (!deck.length || deck[0].userId !== userId) {
+    throw new Error("Forbidden: You don't own this deck");
+  }
+  
+  // 4. Perform mutation
+  const [newCard] = await db.insert(cardsTable).values({
+    deckId: validatedData.deckId,
+    front: validatedData.front,
+    back: validatedData.back,
+  }).returning();
+  
+  // 5. Revalidate cache
+  revalidatePath(`/decks/${validatedData.deckId}`);
+  
+  // 6. Return result
+  return { success: true, card: newCard };
+}
+```
+
+### 5. Calling Server Actions from Client Components
+
+```typescript
+"use client";
+
+import { useState } from "react";
+import { createCard } from "@/actions/cards";
+import { useRouter } from "next/navigation";
+
+export function CreateCardForm({ deckId }: { deckId: string }) {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      // Pass properly typed object, not FormData
+      await createCard({
+        deckId,
+        front: formData.get("front") as string,
+        back: formData.get("back") as string,
+      });
+      
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    }
+  }
+  
+  return <form onSubmit={handleSubmit}>{/* form fields */}</form>;
+}
+```
+
+## Summary Checklist
+
+When implementing data operations:
+
+- [ ] **Data fetching**: Done in Server Components, never in Client Components
+- [ ] **Data mutations**: Done via Server Actions marked with `"use server"`
+- [ ] **Zod schema**: Defined for every Server Action
+- [ ] **TypeScript type**: Inferred from Zod schema using `z.infer<typeof schema>`
+- [ ] **Input validation**: All inputs validated with `schema.parse(input)`
+- [ ] **Type safety**: Server Action parameters use proper TypeScript types (never `FormData` or `any`)
+- [ ] **Authentication**: Check `auth()` in every Server Action
+- [ ] **Authorization**: Verify ownership before mutations
+- [ ] **Cache revalidation**: Call `revalidatePath()` or `revalidateTag()` after mutations
+
+## File Organization
+
+Recommended structure:
+
+```
+src/
+├── app/
+│   └── decks/
+│       └── page.tsx          # Server Component (data fetching)
+├── actions/
+│   ├── decks.ts              # Server Actions for decks
+│   └── cards.ts              # Server Actions for cards
+└── components/
+    └── create-deck-form.tsx  # Client Component (calls Server Actions)
+```
