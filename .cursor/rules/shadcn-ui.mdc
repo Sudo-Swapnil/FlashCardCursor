@@ -1,13 +1,32 @@
 ---
 alwaysApply: true
 ---
-# shadcn UI Usage
+# shadcn UI Usage - STRICT POLICY
 
-This project uses **shadcn UI** for all UI elements.
+This project **EXCLUSIVELY** uses **shadcn UI** for all UI elements.
+
+## 🚫 ABSOLUTELY FORBIDDEN
+
+**NO CUSTOM UI COMPONENTS ARE ALLOWED IN THIS PROJECT.**
+
+- ❌ **NEVER** create custom buttons, inputs, cards, dialogs, or any UI elements from scratch
+- ❌ **NEVER** write custom Tailwind classes for complex UI patterns that shadcn already provides
+- ❌ **NEVER** build UI components manually when a shadcn alternative exists
+- ❌ **NEVER** use unstyled HTML elements (`<button>`, `<input>`, `<select>`, etc.) directly - always wrap with shadcn components
+
+## ✅ REQUIRED APPROACH
+
+**ALWAYS use shadcn UI components for every UI element.**
+
+If you need a UI component:
+
+1. **First**: Check if it's already installed in `src/components/ui/`
+2. **If not installed**: Add it using the shadcn CLI command (see below)
+3. **Then**: Import and use the shadcn component
 
 ## Initialization
 
-If shadcn UI is not initialized in the project, use the following command:
+If shadcn UI is not initialized in the project, use:
 
 ```bash
 npx shadcn@latest init
@@ -15,18 +34,101 @@ npx shadcn@latest init
 
 ## Adding Components
 
-If a particular component is not installed, use the following command to add it.
-
-**Example:** To install the button component:
+**Before creating ANY UI element, install the appropriate shadcn component:**
 
 ```bash
-npx shadcn@latest add button
+npx shadcn@latest add [component-name]
 ```
 
-Replace `button` with the name of any other component you need (e.g., `card`, `dialog`, `input`, `select`, etc.).
+### Common Components
 
-## General Guidelines
+```bash
+# Forms and Inputs
+npx shadcn@latest add button
+npx shadcn@latest add input
+npx shadcn@latest add textarea
+npx shadcn@latest add select
+npx shadcn@latest add checkbox
+npx shadcn@latest add radio-group
+npx shadcn@latest add switch
+npx shadcn@latest add slider
 
-- Always use shadcn UI components instead of creating custom UI elements from scratch
-- Check if a component is already installed before adding it
-- Follow shadcn UI's component structure and conventions
+# Layout
+npx shadcn@latest add card
+npx shadcn@latest add separator
+npx shadcn@latest add tabs
+npx shadcn@latest add accordion
+
+# Overlays
+npx shadcn@latest add dialog
+npx shadcn@latest add alert-dialog
+npx shadcn@latest add sheet
+npx shadcn@latest add popover
+npx shadcn@latest add dropdown-menu
+
+# Feedback
+npx shadcn@latest add alert
+npx shadcn@latest add toast
+npx shadcn@latest add badge
+npx shadcn@latest add progress
+
+# Data Display
+npx shadcn@latest add table
+npx shadcn@latest add avatar
+npx shadcn@latest add skeleton
+```
+
+## What If shadcn Doesn't Have the Component?
+
+If shadcn truly doesn't provide a component you need:
+
+1. **Check again** - shadcn has 50+ components, verify it doesn't exist
+2. **Compose existing components** - Most "custom" UI can be built by combining shadcn components
+3. **Use Radix UI primitives** - shadcn is built on Radix UI, use unstyled Radix primitives if needed
+4. **Last resort** - Only if absolutely no alternative exists, document why custom UI is necessary
+
+## Examples
+
+### ❌ WRONG: Custom Button
+
+```typescript
+// NEVER DO THIS
+export function CustomButton({ children }: { children: React.ReactNode }) {
+  return (
+    <button className="px-4 py-2 bg-blue-500 text-white rounded">
+      {children}
+    </button>
+  );
+}
+```
+
+### ✅ CORRECT: shadcn Button
+
+```typescript
+// ALWAYS DO THIS
+import { Button } from "@/components/ui/button";
+
+export function MyComponent() {
+  return <Button>Click me</Button>;
+}
+```
+
+### ❌ WRONG: Custom Form Input
+
+```typescript
+// NEVER DO THIS
+<input type="text" className="border rounded px-3 py-2" />
+```
+
+### ✅ CORRECT: shadcn Input
+
+```typescript
+// ALWAYS DO THIS
+import { Input } from "@/components/ui/input";
+
+<Input type="text" />
+```
+
+## Enforcement
+
+**This is a hard requirement.** All code reviews should reject any custom UI components that duplicate shadcn functionality.
