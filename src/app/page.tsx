@@ -24,13 +24,13 @@ export default async function Home() {
         </div>
         
         <div className="flex flex-col gap-4 sm:flex-row">
-          <SignInButton mode="modal">
+          <SignInButton mode="modal" forceRedirectUrl="/dashboard">
             <Button size="lg" className="min-w-[140px]">
               Sign In
             </Button>
           </SignInButton>
           
-          <SignUpButton mode="modal">
+          <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
             <Button variant="outline" size="lg" className="min-w-[140px]">
               Sign Up
             </Button>

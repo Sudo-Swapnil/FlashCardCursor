@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { getDeckCount } from "@/db/queries/decks";
 import { getCardCount } from "@/db/queries/cards";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -45,7 +46,9 @@ export default async function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full">View Decks</Button>
+              <Link href="/dashboard/decks">
+                <Button className="w-full">View Decks</Button>
+              </Link>
             </CardContent>
           </Card>
 

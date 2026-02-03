@@ -70,7 +70,7 @@ export async function createCardAction(input: CreateCardInput) {
 
   // 5. Revalidate cache
   revalidatePath("/dashboard");
-  revalidatePath(`/decks/${validatedData.deckId}`);
+  revalidatePath(`/dashboard/decks/${validatedData.deckId}`);
 
   // 6. Return result
   return { success: true, card: newCard };
@@ -101,7 +101,7 @@ export async function updateCardAction(input: UpdateCardInput) {
 
   // 5. Revalidate cache
   revalidatePath("/dashboard");
-  revalidatePath(`/decks/${cardWithDeck.deck.id}`);
+  revalidatePath(`/dashboard/decks/${cardWithDeck.deck.id}`);
 
   // 6. Return result
   return { success: true, card: updatedCard };
@@ -129,7 +129,7 @@ export async function deleteCardAction(input: DeleteCardInput) {
 
   // 5. Revalidate cache
   revalidatePath("/dashboard");
-  revalidatePath(`/decks/${cardWithDeck.deck.id}`);
+  revalidatePath(`/dashboard/decks/${cardWithDeck.deck.id}`);
 
   // 6. Return result
   return { success: true };
