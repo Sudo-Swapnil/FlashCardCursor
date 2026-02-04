@@ -56,7 +56,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/decks">
+            <Link href="/dashboard">
               <Button>Back to My Decks</Button>
             </Link>
           </CardContent>
@@ -84,7 +84,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <Link href="/dashboard/decks">
+            <Link href="/dashboard">
               <Button variant="outline">← Back to Decks</Button>
             </Link>
           </div>

@@ -5,10 +5,11 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getDeckCount } from "@/db/queries/decks";
+import { getDecksByUserId, getDeckCount } from "@/db/queries/decks";
 import { getCardCount } from "@/db/queries/cards";
 import Link from "next/link";
 
@@ -19,70 +20,37 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  // Fetch stats using query functions
-  const [deckCount, cardCount] = await Promise.all([
+  // Fetch user's decks and stats using query functions
+  const [decks, deckCount, cardCount] = await Promise.all([
+    getDecksByUserId(userId),
     getDeckCount(userId),
     getCardCount(userId),
   ]);
+
+  // Format date helper
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(date));
+  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight">My Decks</h2>
           <p className="text-muted-foreground mt-2">
-            Welcome back! Manage your flashcard decks and start learning.
+            View and manage all your flashcard decks
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Decks</CardTitle>
-              <CardDescription>
-                View and manage all your flashcard decks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href="/dashboard/decks">
-                <Button className="w-full">View Decks</Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Create Deck</CardTitle>
-              <CardDescription>
-                Start a new flashcard deck from scratch
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" variant="outline">
-                New Deck
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Study Mode</CardTitle>
-              <CardDescription>
-                Practice with your flashcards
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" variant="outline">
-                Start Studying
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Stats Section */}
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl font-bold">{deckCount}</CardTitle>
@@ -104,6 +72,51 @@ export default async function DashboardPage() {
             </CardHeader>
           </Card>
         </div>
+
+        {/* Decks Grid */}
+        {decks.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>No decks yet</CardTitle>
+              <CardDescription>
+                Create your first deck to start learning!
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button>Create Deck</Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {decks.map((deck) => (
+              <Card key={deck.id}>
+                <CardHeader className="min-h-20 overflow-y-auto">
+                  <CardTitle>{deck.name}</CardTitle>
+                  <CardDescription>
+                    {deck.description || "No description"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  <Link href={`/dashboard/decks/${deck.id}`}>
+                    <Button className="w-full" variant="default">
+                      View Deck
+                    </Button>
+                  </Link>
+                   <Link href={`/dashboard/decks/${deck.id}/study`}>
+                    <Button className="w-full" variant="outline">
+                      Study
+                    </Button>
+                  </Link>
+                </CardContent>
+                <CardFooter>
+                  <CardDescription>
+                    Last modified: {formatDate(deck.updatedAt)}
+                  </CardDescription>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

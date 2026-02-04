@@ -250,7 +250,7 @@ export function StudySession({ deckId, deckName, cards }: StudySessionProps) {
                   View Current Deck
                 </Button>
               </Link>
-              <Link href="/dashboard/decks" className="w-64">
+              <Link href="/dashboard" className="w-64">
                 <Button variant="outline" size="lg" className="w-full">
                   View All Decks
                 </Button>

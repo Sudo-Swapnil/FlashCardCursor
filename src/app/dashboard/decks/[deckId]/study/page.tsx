@@ -52,7 +52,7 @@ export default async function StudyPage({ params }: PageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/decks">
+            <Link href="/dashboard">
               <Button>Back to My Decks</Button>
             </Link>
           </CardContent>
