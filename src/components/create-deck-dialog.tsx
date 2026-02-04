@@ -16,12 +16,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createDeckAction } from "@/actions/decks";
 import { toast } from "sonner";
+import Link from "next/link";
 
 type CreateDeckDialogProps = {
   trigger?: React.ReactNode;
+  isLimitReached?: boolean;
+  deckCount?: number;
 };
 
-export function CreateDeckDialog({ trigger }: CreateDeckDialogProps) {
+export function CreateDeckDialog({ trigger, isLimitReached = false, deckCount = 0 }: CreateDeckDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -55,6 +58,49 @@ export function CreateDeckDialog({ trigger }: CreateDeckDialogProps) {
       setIsLoading(false);
     }
   };
+
+  // If limit is reached, show upgrade prompt instead of opening dialog
+  if (isLimitReached) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          {trigger || <Button>Create New Deck</Button>}
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[525px]">
+          <DialogHeader>
+            <DialogTitle>Deck Limit Reached</DialogTitle>
+            <DialogDescription>
+              You've reached the free plan limit of 3 decks ({deckCount}/3 decks used).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Upgrade to Pro to unlock:
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                <span>Unlimited flashcard decks</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                <span>AI-powered flashcard generation</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-primary">✓</span>
+                <span>Advanced study features</span>
+              </li>
+            </ul>
+          </div>
+          <DialogFooter>
+            <Link href="/pricing" className="w-full">
+              <Button className="w-full">Upgrade to Pro</Button>
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

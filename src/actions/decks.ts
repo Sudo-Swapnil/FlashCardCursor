@@ -43,7 +43,7 @@ type DeleteDeckInput = z.infer<typeof deleteDeckSchema>;
 
 export async function createDeckAction(input: CreateDeckInput) {
   // 1. Authenticate
-  const { userId } = await auth();
+  const { userId, has } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
   }
@@ -51,18 +51,30 @@ export async function createDeckAction(input: CreateDeckInput) {
   // 2. Validate input
   const validatedData = createDeckSchema.parse(input);
 
-  // 3. Call mutation function
+  // 3. Check deck limit for free users
+  const hasUnlimitedDecks = has({ feature: "unlimited_decks" });
+  
+  if (!hasUnlimitedDecks) {
+    const { getDeckCount } = await import("@/db/queries/decks");
+    const deckCount = await getDeckCount(userId);
+    
+    if (deckCount >= 3) {
+      throw new Error("You've reached the 3 deck limit. Upgrade to Pro for unlimited decks.");
+    }
+  }
+
+  // 4. Call mutation function
   const newDeck = await createDeck({
     userId,
     name: validatedData.name,
     description: validatedData.description || null,
   });
 
-  // 4. Revalidate cache
+  // 5. Revalidate cache
   revalidatePath("/dashboard");
   revalidatePath("/decks");
 
-  // 5. Return result
+  // 6. Return result
   return { success: true, deck: newDeck };
 }
 

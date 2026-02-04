@@ -15,11 +15,15 @@ import Link from "next/link";
 import { CreateDeckDialog } from "@/components/create-deck-dialog";
 
 export default async function DashboardPage() {
-  const { userId } = await auth();
+  const { userId, has } = await auth();
 
   if (!userId) {
     redirect("/");
   }
+
+  // Check if user has Pro plan
+  const hasProPlan = has({ plan: "pro" });
+  const hasUnlimitedDecks = has({ feature: "unlimited_decks" });
 
   // Fetch user's decks and stats using query functions
   const [decks, deckCount, cardCount] = await Promise.all([
@@ -43,6 +47,31 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Upgrade Banner for Free Users */}
+        {!hasProPlan && (
+          <Card className="mb-8 border-primary/50 bg-primary/5">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <span className="rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold">
+                      FREE PLAN
+                    </span>
+                    Unlock Premium Features
+                  </CardTitle>
+                  <CardDescription className="mt-2">
+                    You're currently on the Free plan with {deckCount}/3 decks used.
+                    Upgrade to Pro for unlimited decks and AI-powered flashcard generation!
+                  </CardDescription>
+                </div>
+                <Link href="/pricing">
+                  <Button>Upgrade to Pro</Button>
+                </Link>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
+
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">My Decks</h2>
@@ -50,7 +79,10 @@ export default async function DashboardPage() {
               View and manage all your flashcard decks
             </p>
           </div>
-          <CreateDeckDialog />
+          <CreateDeckDialog 
+            isLimitReached={!hasUnlimitedDecks && deckCount >= 3}
+            deckCount={deckCount}
+          />
         </div>
 
         {/* Stats Section */}
@@ -87,7 +119,11 @@ export default async function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CreateDeckDialog trigger={<Button>Create Deck</Button>} />
+              <CreateDeckDialog 
+                trigger={<Button>Create Deck</Button>}
+                isLimitReached={!hasUnlimitedDecks && deckCount >= 3}
+                deckCount={deckCount}
+              />
             </CardContent>
           </Card>
         ) : (
