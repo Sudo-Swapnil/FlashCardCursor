@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { decksTable } from "@/db/schema";
+import { decksTable, cardsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 // ============================================
@@ -64,5 +64,9 @@ export async function updateDeck(
 }
 
 export async function deleteDeck(deckId: number) {
+  // First delete all cards associated with this deck
+  await db.delete(cardsTable).where(eq(cardsTable.deckId, deckId));
+  
+  // Then delete the deck itself
   await db.delete(decksTable).where(eq(decksTable.id, deckId));
 }

@@ -15,6 +15,8 @@ import { AddCardDialog } from "@/components/add-card-dialog";
 import { EditDeckDialog } from "@/components/edit-deck-dialog";
 import { EditCardDialog } from "@/components/edit-card-dialog";
 import { DeleteCardButton } from "@/components/delete-card-button";
+import { DeleteDeckDialog } from "@/components/delete-deck-dialog";
+import { StudyButton } from "@/components/study-button";
 import Link from "next/link";
 
 type PageProps = {
@@ -90,10 +92,15 @@ export default async function DeckDetailPage({ params }: PageProps) {
           </div>
 
           {/* Deck Info & Metadata - Main Card */}
-          <Card className="bg-gradient-to-br from-background to-muted/20">
+          <Card className="bg-gradient-to-br from-background to-muted/20 relative">
             <CardContent className="pt-6 pb-6">
+              {/* Delete Icon in Top Right Corner */}
+              <div className="absolute top-4 right-4">
+                <DeleteDeckDialog deckId={deckIdNum} deckName={deck.name} />
+              </div>
+
               {/* Deck Title and Action Buttons */}
-              <div className="flex items-start justify-between gap-4 mb-4">
+              <div className="flex items-start justify-between gap-4 mb-4 pr-12">
                 <h1 className="text-4xl font-bold tracking-tight">
                   {deck.name}
                 </h1>
@@ -136,16 +143,12 @@ export default async function DeckDetailPage({ params }: PageProps) {
                 <Progress value={0} className="h-2 mb-4" />
                 
                 <div className="flex justify-center">
-                  <Link href={`/dashboard/decks/${deckIdNum}/study`}>
-                    <Button 
-                      size="lg" 
-                      className="w-full text-lg py-6"
-                      disabled={cardCount === 0}
-                    >
-                      <span className="mr-2">📚</span>
-                      Start Study Session
-                    </Button>
-                  </Link>
+                  <StudyButton
+                    deckId={deckIdNum}
+                    cardCount={cardCount}
+                    size="lg"
+                    className="w-full text-lg py-6"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -203,11 +206,14 @@ export default async function DeckDetailPage({ params }: PageProps) {
         {/* Study Mode Button */}
         {cards.length > 0 && (
           <div className="flex justify-center">
-            <Link href={`/dashboard/decks/${deckIdNum}/study`}>
-              <Button size="lg" className="px-8">
-                Start Study Session
-              </Button>
-            </Link>
+            <StudyButton
+              deckId={deckIdNum}
+              cardCount={cardCount}
+              size="lg"
+              className="px-8"
+            >
+              Start Study Session
+            </StudyButton>
           </div>
         )}
       </main>

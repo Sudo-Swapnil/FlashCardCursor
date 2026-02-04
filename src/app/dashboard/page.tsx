@@ -12,6 +12,7 @@ import {
 import { getDecksByUserId, getDeckCount } from "@/db/queries/decks";
 import { getCardCount } from "@/db/queries/cards";
 import Link from "next/link";
+import { CreateDeckDialog } from "@/components/create-deck-dialog";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -42,11 +43,14 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold tracking-tight">My Decks</h2>
-          <p className="text-muted-foreground mt-2">
-            View and manage all your flashcard decks
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">My Decks</h2>
+            <p className="text-muted-foreground mt-2">
+              View and manage all your flashcard decks
+            </p>
+          </div>
+          <CreateDeckDialog />
         </div>
 
         {/* Stats Section */}
@@ -83,7 +87,7 @@ export default async function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button>Create Deck</Button>
+              <CreateDeckDialog trigger={<Button>Create Deck</Button>} />
             </CardContent>
           </Card>
         ) : (
