@@ -12,6 +12,9 @@ import { Progress } from "@/components/ui/progress";
 import { getDeckById } from "@/db/queries/decks";
 import { getCardsByDeckId, getCardCountByDeckId } from "@/db/queries/cards";
 import { AddCardDialog } from "@/components/add-card-dialog";
+import { EditDeckDialog } from "@/components/edit-deck-dialog";
+import { EditCardDialog } from "@/components/edit-card-dialog";
+import { DeleteCardButton } from "@/components/delete-card-button";
 import Link from "next/link";
 
 type PageProps = {
@@ -95,7 +98,11 @@ export default async function DeckDetailPage({ params }: PageProps) {
                   {deck.name}
                 </h1>
                 <div className="flex gap-2 flex-shrink-0">
-                  <Button variant="outline">Edit Deck</Button>
+                  <EditDeckDialog
+                    deckId={deckIdNum}
+                    currentName={deck.name}
+                    currentDescription={deck.description}
+                  />
                   <AddCardDialog deckId={deckIdNum} />
                 </div>
               </div>
@@ -129,14 +136,16 @@ export default async function DeckDetailPage({ params }: PageProps) {
                 <Progress value={0} className="h-2 mb-4" />
                 
                 <div className="flex justify-center">
-                  <Button 
-                    size="lg" 
-                    className="w-[20%] text-lg py-6"
-                    disabled={cardCount === 0}
-                  >
-                    <span className="mr-2">📚</span>
-                    Start Study Session
-                  </Button>
+                  <Link href={`/dashboard/decks/${deckIdNum}/study`}>
+                    <Button 
+                      size="lg" 
+                      className="w-full text-lg py-6"
+                      disabled={cardCount === 0}
+                    >
+                      <span className="mr-2">📚</span>
+                      Start Study Session
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </CardContent>
@@ -163,10 +172,7 @@ export default async function DeckDetailPage({ params }: PageProps) {
             <div className="grid gap-4 md:grid-cols-2">
               {cards.map((card) => (
                 <Card key={card.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Card #{card.id}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-4 pt-6">
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground mb-2">
                         FRONT
@@ -180,12 +186,12 @@ export default async function DeckDetailPage({ params }: PageProps) {
                       <p className="text-base">{card.back}</p>
                     </div>
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Delete
-                      </Button>
+                      <EditCardDialog
+                        cardId={card.id}
+                        currentFront={card.front}
+                        currentBack={card.back}
+                      />
+                      <DeleteCardButton cardId={card.id} />
                     </div>
                   </CardContent>
                 </Card>
@@ -197,9 +203,11 @@ export default async function DeckDetailPage({ params }: PageProps) {
         {/* Study Mode Button */}
         {cards.length > 0 && (
           <div className="flex justify-center">
-            <Button size="lg" className="px-8">
-              Start Study Session
-            </Button>
+            <Link href={`/dashboard/decks/${deckIdNum}/study`}>
+              <Button size="lg" className="px-8">
+                Start Study Session
+              </Button>
+            </Link>
           </div>
         )}
       </main>

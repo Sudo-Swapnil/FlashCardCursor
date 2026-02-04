@@ -78,9 +78,11 @@ export default async function DecksPage() {
                       View Deck
                     </Button>
                   </Link>
-                  <Button className="w-full" variant="outline">
-                    Study
-                  </Button>
+                   <Link href={`/dashboard/decks/${deck.id}/study`}>
+                    <Button className="w-full" variant="outline">
+                      Study
+                    </Button>
+                  </Link>
                 </CardContent>
                 <CardFooter>
                   <CardDescription>
