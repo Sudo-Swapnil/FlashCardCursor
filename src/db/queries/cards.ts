@@ -14,6 +14,19 @@ export async function getCardsByDeckId(deckId: number) {
     .orderBy(cardsTable.createdAt);
 }
 
+export async function getCardsByDeckIdAndUserId(deckId: number, userId: string) {
+  const result = await db
+    .select({
+      card: cardsTable,
+    })
+    .from(cardsTable)
+    .innerJoin(decksTable, eq(cardsTable.deckId, decksTable.id))
+    .where(and(eq(cardsTable.deckId, deckId), eq(decksTable.userId, userId)))
+    .orderBy(cardsTable.createdAt);
+  
+  return result.map(r => r.card);
+}
+
 export async function getCardById(cardId: number) {
   const result = await db
     .select()

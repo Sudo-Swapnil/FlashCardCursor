@@ -9,8 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getDeckById } from "@/db/queries/decks";
-import { getCardsByDeckId, getCardCountByDeckId } from "@/db/queries/cards";
+import { getDeckByIdAndUserId } from "@/db/queries/decks";
+import { getCardsByDeckIdAndUserId, getCardCountByDeckId } from "@/db/queries/cards";
 import { AddCardDialog } from "@/components/add-card-dialog";
 import { EditDeckDialog } from "@/components/edit-deck-dialog";
 import { EditCardDialog } from "@/components/edit-card-dialog";
@@ -42,23 +42,18 @@ export default async function DeckDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  // Fetch deck using query function
-  const deck = await getDeckById(deckIdNum);
+  // Fetch deck using query function with userId filter
+  const deck = await getDeckByIdAndUserId(deckIdNum, userId);
 
-  // Check if deck exists
+  // Check if deck exists and user has access (combined check)
   if (!deck) {
-    notFound();
-  }
-
-  // Verify ownership
-  if (deck.userId !== userId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
+            <CardTitle>Deck Not Found</CardTitle>
             <CardDescription>
-              You don&apos;t have permission to view this deck.
+              This deck doesn&apos;t exist or you don&apos;t have permission to view it.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -71,8 +66,8 @@ export default async function DeckDetailPage({ params }: PageProps) {
     );
   }
 
-  // Fetch cards for this deck
-  const cards = await getCardsByDeckId(deckIdNum);
+  // Fetch cards for this deck with userId verification
+  const cards = await getCardsByDeckIdAndUserId(deckIdNum, userId);
   const cardCount = await getCardCountByDeckId(deckIdNum);
 
   // Format date helper

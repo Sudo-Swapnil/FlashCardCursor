@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { decksTable, cardsTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // ============================================
 // QUERY FUNCTIONS (Read Operations)
@@ -19,6 +19,16 @@ export async function getDeckById(deckId: number) {
     .select()
     .from(decksTable)
     .where(eq(decksTable.id, deckId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function getDeckByIdAndUserId(deckId: number, userId: string) {
+  const result = await db
+    .select()
+    .from(decksTable)
+    .where(and(eq(decksTable.id, deckId), eq(decksTable.userId, userId)))
     .limit(1);
   
   return result[0] || null;

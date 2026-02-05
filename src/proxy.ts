@@ -12,16 +12,17 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // Protect dashboard routes - redirect to home if not authenticated
-  if (!userId && pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  // Allow public routes
+  // Allow public routes without authentication
   if (isPublicRoute(req)) {
     return NextResponse.next();
   }
 
+  // All other routes require authentication - redirect to home if not authenticated
+  if (!userId) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  // User is authenticated, allow access
   return NextResponse.next();
 });
 
