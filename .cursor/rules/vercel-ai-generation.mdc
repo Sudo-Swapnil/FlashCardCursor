@@ -1,0 +1,153 @@
+---
+alwaysApply: true
+---
+# Vercel AI SDK for Flashcard Generation
+
+This project uses the **Vercel AI SDK** (`ai` npm package) to generate flashcards using OpenAI.
+
+## Core Pattern: Structured Output Generation
+
+Use `generateText` with `Output.object()` to generate type-safe, structured data validated by Zod schemas.
+
+## Required Imports
+
+```typescript
+import { generateText, Output } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+```
+
+## Flashcard Generation Example
+
+When generating flashcards, always use this pattern:
+
+```typescript
+import { generateText, Output } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+// Define the schema for flashcard generation
+const flashcardSchema = z.object({
+  cards: z.array(
+    z.object({
+      front: z.string().describe('The question or prompt on the front of the card'),
+      back: z.string().describe('The answer or explanation on the back of the card'),
+    })
+  ),
+});
+
+// Generate flashcards
+const { output } = await generateText({
+  model: openai('gpt-4o-mini'),
+  output: Output.object({
+    schema: flashcardSchema,
+  }),
+  prompt: `Generate ${numberOfCards} flashcards about ${topic}. 
+    Each card should have a clear question on the front and a concise answer on the back.`,
+});
+
+// Access the generated cards
+const flashcards = output.cards; // Type-safe array of { front: string, back: string }
+```
+
+## Best Practices
+
+1. **Model Selection**: Use `gpt-4o-mini` for cost-effective flashcard generation
+2. **Schema Descriptions**: Add `.describe()` to schema fields to guide the AI
+3. **Prompt Engineering**: Be specific about the number of cards and topic in the prompt
+4. **Type Safety**: The `output` object is fully typed based on your Zod schema
+5. **Error Handling**: Wrap `generateText` in try-catch to handle API errors
+
+## Dynamic Card Count Example
+
+```typescript
+async function generateFlashcards(topic: string, count: number) {
+  const { output } = await generateText({
+    model: openai('gpt-4o-mini'),
+    output: Output.object({
+      schema: z.object({
+        cards: z.array(
+          z.object({
+            front: z.string(),
+            back: z.string(),
+          })
+        ).length(count), // Enforce exact count
+      }),
+    }),
+    prompt: `Generate exactly ${count} flashcards about "${topic}".
+      Create diverse questions covering key concepts, definitions, and practical applications.
+      Each card should be clear, concise, and educational.`,
+  });
+  
+  return output.cards;
+}
+```
+
+## Integration with Server Actions
+
+When using in Server Actions, combine with proper authentication and validation:
+
+```typescript
+"use server";
+
+import { auth } from "@clerk/nextjs/server";
+import { generateText, Output } from 'ai';
+import { openai } from '@ai-sdk/openai';
+import { z } from 'zod';
+
+const generateCardsSchema = z.object({
+  topic: z.string().min(1).max(200),
+  count: z.number().min(1).max(50),
+  deckId: z.string().uuid(),
+});
+
+export async function generateFlashcardsAction(input: z.infer<typeof generateCardsSchema>) {
+  // 1. Authenticate
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  
+  // 2. Validate input
+  const { topic, count, deckId } = generateCardsSchema.parse(input);
+  
+  // 3. Verify deck ownership (use query function)
+  // ... ownership check ...
+  
+  // 4. Generate flashcards with AI
+  const { output } = await generateText({
+    model: openai('gpt-4o-mini'),
+    output: Output.object({
+      schema: z.object({
+        cards: z.array(
+          z.object({
+            front: z.string(),
+            back: z.string(),
+          })
+        ),
+      }),
+    }),
+    prompt: `Generate ${count} flashcards about "${topic}".`,
+  });
+  
+  // 5. Insert generated cards into database (use mutation function)
+  // ... create cards ...
+  
+  return { success: true, cards: output.cards };
+}
+```
+
+## Environment Variables
+
+Ensure `OPENAI_API_KEY` is set in your `.env` file:
+
+```
+OPENAI_API_KEY=sk-...
+```
+
+## Summary
+
+- Always use `generateText` with `Output.object()` for structured generation
+- Define Zod schemas with `front` and `back` properties for flashcards
+- Use `openai('gpt-4o-mini')` as the model
+- Include clear, specific prompts with topic and count
+- Integrate with Server Actions following the Next.js data patterns rule
+- Handle errors appropriately in production code

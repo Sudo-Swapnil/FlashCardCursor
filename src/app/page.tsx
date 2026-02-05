@@ -1,16 +1,10 @@
 import { SignInButton, SignUpButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default async function Home() {
-  const { userId } = await auth();
+export default function Home() {
+  // Note: Middleware handles redirecting authenticated users to /dashboard
+  // This page only renders for unauthenticated users
   
-  // Redirect logged-in users to dashboard
-  if (userId) {
-    redirect("/dashboard");
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted">
       <main className="flex flex-col items-center justify-center gap-8 px-4 text-center">

@@ -17,6 +17,7 @@ import { EditCardDialog } from "@/components/edit-card-dialog";
 import { DeleteCardButton } from "@/components/delete-card-button";
 import { DeleteDeckDialog } from "@/components/delete-deck-dialog";
 import { StudyButton } from "@/components/study-button";
+import { GenerateAICardsButton } from "@/components/generate-ai-cards-button";
 import Link from "next/link";
 
 type PageProps = {
@@ -24,11 +25,14 @@ type PageProps = {
 };
 
 export default async function DeckDetailPage({ params }: PageProps) {
-  const { userId } = await auth();
+  const { userId, has } = await auth();
 
   if (!userId) {
     redirect("/");
   }
+
+  // Check if user has AI generation feature
+  const hasAIGeneration = has({ feature: "ai_flashcard_generation" });
 
   // Get deckId from params
   const { deckId } = await params;
@@ -110,6 +114,12 @@ export default async function DeckDetailPage({ params }: PageProps) {
                     currentName={deck.name}
                     currentDescription={deck.description}
                   />
+                  <GenerateAICardsButton
+                    deckId={deckIdNum}
+                    hasAIGeneration={hasAIGeneration}
+                    deckName={deck.name}
+                    deckDescription={deck.description}
+                  />
                   <AddCardDialog deckId={deckIdNum} />
                 </div>
               </div>
@@ -168,7 +178,15 @@ export default async function DeckDetailPage({ params }: PageProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <AddCardDialog deckId={deckIdNum} />
+                <div className="flex gap-2">
+                  <GenerateAICardsButton
+                    deckId={deckIdNum}
+                    hasAIGeneration={hasAIGeneration}
+                    deckName={deck.name}
+                    deckDescription={deck.description}
+                  />
+                  <AddCardDialog deckId={deckIdNum} />
+                </div>
               </CardContent>
             </Card>
           ) : (
